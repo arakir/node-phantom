@@ -4,7 +4,6 @@ var port=phantom.args[0];
 var webpage=require('webpage');
 var controlpage=webpage.create();
 
-
 function respond(response){
 //	console.log('responding:'+response);
 	controlpage.evaluate('function(){socket.emit("res",'+JSON.stringify(response)+');}');
@@ -23,11 +22,18 @@ function setupPushNotifications(id, page) {
 	callbacks.forEach(function(cb) {
 		page[cb]=function(parm){
 			var notification=Array.prototype.slice.call(arguments);
-			if((cb==='onResourceRequested')&&(parm.url.indexOf('data:image')===0)) return;
 
 			push([id, cb, notification]);
 		};
 	});
+
+    // For some reason phantomjs crash when used in forEach above
+    page.onResourceRequested = function(parm){
+        var notification=Array.prototype.slice.call(arguments);
+        if((parm.url.indexOf('data:image')===0)) return;
+
+        push([id, 'onResourceRequested', notification]);
+    }
 }
 
 controlpage.onAlert=function(msg){
@@ -125,12 +131,12 @@ controlpage.onAlert=function(msg){
 		case 'pageSetFn':
             page[request[3]] = eval('(' + request[4] + ')');
 			break;
-        case 'pageOnResourceRequested':
-            page._onResourceRequested = page.onResourceRequested;
+        case 'pageSetOnResourceRequested':
+            page._onResourceRequested = page._onResourceRequested || page.onResourceRequested;
             page.onResourceRequested = function(){
                 eval(request[3].replace(/function.*\(/,'function x('));
                 x.apply(this, arguments);
-                respond([id,cmdId,'pageOnResourceRequestedDone',JSON.stringify(Array.prototype.slice.call(arguments))]);
+                page._onResourceRequested.apply(page,arguments);
             };
             break;
 		case 'pageSetViewport':

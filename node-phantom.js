@@ -76,7 +76,7 @@ module.exports={
 					cmds[cmdid]={cb:callback};
 					cmdid++;
 				}
-			
+
 				io.sockets.on('connection',function(socket){
 					socket.on('res',function(response){
 //						console.log(response);
@@ -128,9 +128,9 @@ module.exports={
 								setFn: function(pageCallbackName, fn, callback) {
 									request(socket, [id, 'pageSetFn', pageCallbackName, fn.toString()], callbackOrDummy(callback));
 								},
-                                onResourceRequested: function(fn, callback) {
-                                    // TODO: remove old callback from cmds
-                                    request(socket, [id, 'pageOnResourceRequested', fn.toString()], callbackOrDummy(callback));
+                                setOnResourceRequested: function(fn, cb) {
+                                    pageProxy.onResourceRequested = callbackOrDummy(cb);
+                                    request(socket, [id, 'pageSetOnResourceRequested', fn.toString()]);
                                 },
 								setViewport: function(viewport, callback) {
 									request(socket, [id, 'pageSetViewport', viewport.width, viewport.height], callbackOrDummy(callback));
@@ -169,9 +169,6 @@ module.exports={
 							cmds[cmdId].cb(null,JSON.parse(response[3]));
 							delete cmds[cmdId];
 							break;
-                        case 'pageOnResourceRequestedDone':
-                            cmds[cmdId].cb.apply(null, JSON.parse(response[3]));
-                            break;
 						case 'pageClosed':
 							delete pages[id]; // fallthru
 						case 'pageSetDone':
@@ -225,7 +222,7 @@ module.exports={
 					console.warn('phantom crash: code '+code);
 					server.close();
 				};
-				
+
 				phantom.on('exit',prematureExitHandler);
 			});
 		});
