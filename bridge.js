@@ -136,7 +136,7 @@ controlpage.onAlert=function(msg){
             page.onResourceRequested = function(){
                 eval(request[3].replace(/function.*\(/,'function x('));
                 x.apply(this, arguments);
-                page._onResourceRequested.apply(page,arguments);
+                page._onResourceRequested.call(page,arguments[0]);
             };
             break;
 		case 'pageSetViewport':
