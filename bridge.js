@@ -6,6 +6,12 @@ var controlpage=webpage.create();
 
 function respond(response){
 //	console.log('responding:'+response);
+    if (!controlpage.loaded){
+        setTimeout(function(){
+            respond(response);
+        },50);
+        return;
+    }
 	controlpage.evaluate('function(){socket.emit("res",'+JSON.stringify(response)+');}');
 }
 
@@ -158,4 +164,5 @@ controlpage.onConsoleMessage=function(msg){
 
 controlpage.open('http://127.0.0.1:'+port+'/',function(status){
 	//console.log(status);
+    controlpage.loaded = true;
 });
